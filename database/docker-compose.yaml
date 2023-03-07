@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  psg_db:
+    image: pavelgordeychuk/psg_db
+    container_name: psg
+    environment:
+      POSTGRES_DB: default
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    networks:
+      - db_net
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "default", "-U", "admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+  
+  db_migration:
+    image: pavelgordeychuk/py_migrate
+    container_name: migrate
+    environment:
+      HOST: psg
+      PORT: 5432
+      PG_DB: default
+      PG_USER: admin
+      PG_PASSWORD: admin
+    networks:
+      - db_net
+    depends_on:
+      psg_db:
+        condition: service_healthy
+    
+networks:
+  db_net:
+    name: db_net
